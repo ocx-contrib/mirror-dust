@@ -88,11 +88,11 @@ platforms:
   # below — upstream ships neither, ever. See the Scope block in
   # dust/mirror.yml for the asset listing that proves it.
   #
-  # darwin/amd64:
-  #   # Intel slice tested on the arm64 macos-14 runner via Rosetta 2 —
-  #   # GitHub's native macos-13 Intel pool is exhausted and deadlocks push.
-  #   runner: macos-14
-  #   prefix: ["arch", "-x86_64"]
+  darwin/amd64:
+    # Intel slice tested on the arm64 macos-14 runner via Rosetta 2 —
+    # GitHub's native macos-13 Intel pool is exhausted and deadlocks push.
+    runner: macos-14
+    prefix: ["arch", "-x86_64"]
   #
   # windows/amd64:
   #   runner: windows-latest
