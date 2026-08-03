@@ -93,10 +93,9 @@ platforms:
     # GitHub's native macos-13 Intel pool is exhausted and deadlocks push.
     runner: macos-14
     prefix: ["arch", "-x86_64"]
-  #
-  # windows/amd64:
-  #   runner: windows-latest
-  #   shell: pwsh
+  windows/amd64:
+    runner: windows-latest
+    shell: pwsh
 
 notify:
   discord:
