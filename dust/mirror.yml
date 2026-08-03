@@ -1,0 +1,184 @@
+# ⚠ `extends:` is a SHALLOW merge of TOP-LEVEL KEYS. Setting a key here
+# REPLACES the base's block outright — there is no per-key merge. `platforms:`
+# is deliberately NOT restated below: it carries the container legs that make
+# this spec's bare Linux keys honest, and restating it to tweak one runner would
+# drop them all without reddening anything. This repo is single-package, so the
+# measured matrix lives in the base and nothing here touches it.
+extends: ../mirror-base.yml
+
+name: dust
+
+# Logical index package `dust/dust` at the physical path
+# `ghcr.io/ocx-contrib/dust/dust` — slash segments, never hyphen-flattened.
+# Two segments always; `bootandy` is a personal handle, not a vendor, so the
+# tool names itself. The first segment must be this repo's own GitHub owner:
+# GITHUB_TOKEN only authorises packages owned by the repo the workflow runs in.
+#
+# The package segment is `dust`, the name the project publishes and executes
+# under. The crates.io CRATE is `du-dust` (the name `dust` was already taken)
+# and the Debian packages upstream also builds are `du-dust_<ver>-1_<arch>.deb`
+# — but the tar.gz/zip archives, the binary inside them and every doc reference
+# say `dust`. The `.deb` sidecars are excluded by the anchored regexes below.
+target:
+  registry: ghcr.io
+  repository: ocx-contrib/dust/dust
+
+source:
+  type: github_release
+  owner: bootandy
+  repo: dust
+  # dust tags are `v`-prefixed semver (e.g. "v1.2.4"); the capture group drops
+  # the `v` so the published version is bare `1.2.4`. The anchors also exclude
+  # the historical pre-1.0 oddities `v0.8.1-alpha.2` and `v0.7.1.alpha4`, which
+  # are below the floor anyway.
+  tag_pattern: "^v(?P<version>\\d+\\.\\d+\\.\\d+)$"
+
+# ─── libc gate (Phase 3.5) — the evidence, not the conclusion ───────────────
+#
+# `os.features` states what an artifact REQUIRES OF THE HOST. Upstream ships
+# BOTH a `-gnu` and a `-musl` build for x86_64 and aarch64 Linux, so the choice
+# had to be measured rather than inferred. Measured per arch, at BOTH ends of
+# the range:
+#
+#   $ file dust-v1.2.4-x86_64-unknown-linux-musl/dust
+#   ELF 64-bit LSB pie executable, x86-64, static-pie linked, stripped
+#   $ file dust-v1.2.4-aarch64-unknown-linux-musl/dust
+#   ELF 64-bit LSB executable, ARM aarch64, statically linked, stripped
+#   $ readelf -l …/dust | grep -c INTERP  → 0   (x86_64 AND aarch64, 1.2.2 AND 1.2.4)
+#   $ readelf -d …/dust | grep -c NEEDED  → 0   (x86_64 AND aarch64, 1.2.2 AND 1.2.4)
+#     ⇒ musl is linked IN, not linked AGAINST → requires nothing of the host
+#       → BARE `linux/amd64` and BARE `linux/arm64`. `+libc.musl` would be a
+#       false requirement that hid the package from every glibc host it in fact
+#       runs on. The alpine container leg in ../mirror-base.yml is what turns
+#       that claim into evidence.
+#
+# The gnu builds were measured too, and are NOT carried:
+#
+#   $ file dust-v1.2.4-x86_64-unknown-linux-gnu/dust
+#   … dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2 …
+#   $ readelf -d … | grep NEEDED
+#     libgcc_s.so.1  librt.so.1  libpthread.so.0  libdl.so.2  libc.so.6
+#   $ readelf -V … | grep -o 'GLIBC_[0-9.]*' | sort -uV | tail -1  → GLIBC_2.18
+#     (aarch64-gnu identical apart from /lib/ld-linux-aarch64.so.1 and no librt)
+#
+# Publishing the gnu build alongside under `+libc.glibc` would be legal and
+# resolvable (specificity scoring hands a glibc host the more specific key), but
+# the only behaviour that actually differs between a static-musl and a gnu build
+# is NSS/DNS resolution — and dust reads the local filesystem, resolving no
+# names. One artifact per arch, universally resolvable, is the honest minimum.
+#
+# ─── Scope (re-listed for v1.2.2, v1.2.3 and v1.2.4 — the WHOLE range) ──────
+#
+# Every declared pattern below matches EXACTLY ONE asset on EVERY one of the
+# three in-range releases (checked with anchored `grep -cE` against each
+# release's full asset list). A pattern matching ZERO is silently skipped, not
+# an error — it would yield a green run with a missing platform. The asset sets
+# are byte-identical across the range apart from the `.deb` version bump: no
+# arch arrives, none is dropped, so no per-platform `min_version` is needed.
+#
+# TWO GENUINE UPSTREAM COMPLETENESS GAPS, each recorded with its evidence
+# rather than left to be read as an oversight:
+#
+#   • darwin/arm64 — NOT DECLARED, because upstream ships NO Apple Silicon
+#     build at all. `x86_64-apple-darwin` is the only `*-apple-darwin` asset in
+#     v1.2.2, v1.2.3 and v1.2.4 — there has never been an
+#     `aarch64-apple-darwin` asset in this range. Apple Silicon hosts are
+#     served by the Intel slice under Rosetta 2, which is also how the
+#     darwin/amd64 test leg runs (macos-14 + `arch -x86_64`). This is an
+#     upstream gap, not a staging placeholder: the key must NOT be added
+#     speculatively, because a declared platform with no matching asset boots a
+#     real macos runner and reports SUCCESS having tested nothing.
+#
+#   • windows/arm64 — NOT DECLARED, because upstream ships NO ARM64 Windows
+#     build at all. Windows assets across the whole range are exactly
+#     `{i686,x86_64}-pc-windows-{gnu,msvc}` — four zips, no `aarch64-pc-windows-*`
+#     of either flavour. i686 has no OCX platform key (the ocx arch enum is
+#     `amd64` and `arm64` only), so `x86_64-pc-windows-msvc` is the single
+#     declarable Windows asset. Same reasoning as above: not staged, not
+#     pre-written as a live key.
+#
+# Upstream also publishes, and this mirror deliberately does not carry:
+#   x86_64-unknown-linux-gnu, aarch64-unknown-linux-gnu  — see the libc gate above
+#   arm-unknown-linux-gnueabihf                          — no OCX linux/arm key
+#   arm-unknown-linux-musleabi                           — no OCX linux/arm key
+#   i686-unknown-linux-{gnu,musl}                        — no OCX i686 platform
+#   i686-pc-windows-{gnu,msvc}                           — no OCX i686 platform
+#   x86_64-pc-windows-gnu                                — msvc is the one carried
+#   du-dust_<ver>-1_{amd64,i386}.deb                     — sidecar, and the ONLY
+#     place the crate name `du-dust` appears in the asset set. Every anchored
+#     pattern below starts `^dust-v` and ends `\.tar\.gz$`/`\.zip$`, so a
+#     `du-dust_*.deb` can never match on either end.
+#
+# Staged rollout (skill Phase 10): the darwin and windows patterns are
+# pre-written and commented out, in lockstep with their `platforms:` keys in
+# ../mirror-base.yml, and uncommented one pass at a time once the Linux legs are
+# end-to-end green.
+assets:
+  linux/amd64:
+    - "^dust-v.*-x86_64-unknown-linux-musl\\.tar\\.gz$"
+  linux/arm64:
+    - "^dust-v.*-aarch64-unknown-linux-musl\\.tar\\.gz$"
+  # darwin/amd64:
+  #   - "^dust-v.*-x86_64-apple-darwin\\.tar\\.gz$"
+  # windows/amd64:
+  #   - "^dust-v.*-x86_64-pc-windows-msvc\\.zip$"
+
+# Every archive — tarball and zip alike — is a single `dust-v<version>-<triple>/`
+# wrapper holding `dust` (`dust.exe` on Windows, mode 0755) at its ROOT beside
+# LICENSE and README.md (both 0644). One strip_components: 1 therefore serves
+# every platform and the executable lands at the content root, so a single
+# metadata.json (PATH = ${installPath}) serves all of them too.
+asset_type:
+  type: archive
+  strip_components: 1
+
+# `off` — FORCED by the layout above, not chosen. After the strip the bundle's
+# only PATH entry is a bare ${installPath}; the scan only inspects an
+# interface-visible `${installPath}/<dir>` entry, so with no subdirectory to
+# point one at both `auto` and `verify` fail spec load at exit 65:
+#
+#   bin_scan is enabled but metadata.json declares no interface-visible
+#   ${installPath}/<dir> PATH entry — the verification would inspect no file and
+#   pass green whatever the archive contains.
+#
+# The `binaries` list in metadata.json is therefore hand-maintained, exactly as
+# that error directs. It is short and stable: `dust` is the only mode-0755 entry
+# in every archive; LICENSE and README.md are 0644 data. Note the list says
+# `dust`, NOT the crate name `du-dust` — the executable has always been `dust`.
+# Quoted so no YAML 1.1 reader folds the bare word into boolean `false`.
+bin_scan: "off"
+
+metadata:
+  default: metadata.json
+
+catalog:
+  logo: logo.svg
+
+versions:
+  # 1.2.2 is the floor: the asset set and archive layout are byte-identical from
+  # it up (verified against 1.2.3 and 1.2.4), and no in-range release is missing
+  # a declared platform's asset — an asset-less release inside the range is
+  # dropped SILENTLY by the pipeline, with no error and no warning.
+  min: "1.2.2"
+  new_per_run: 5
+  poll_interval: "16 */6 * * *"
+
+tests:
+  # `script:` resolves from the REPOSITORY ROOT — unlike `metadata.default` and
+  # `catalog.logo` above, which resolve against this spec's own directory.
+  - name: smoke
+    script: dust/tests/smoke.star
+
+annotations:
+  # From the Phase 1.5 license gate:
+  #   $ gh api repos/bootandy/dust/license --jq '.license.spdx_id'
+  #   Apache-2.0
+  # Confirmed against the shipped LICENSE file, whose appendix reads
+  # "Copyright [2023] [andrew boot]".
+  org.opencontainers.image.licenses: "Apache-2.0"
+
+announce:
+  # Spelled out, not derived from target.repository — the logical name and the
+  # physical path are related by convention only.
+  package: dust/dust
+  fork: ocx-contrib/index
