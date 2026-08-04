@@ -25,17 +25,6 @@ terminal, and already scoped to the entries worth looking at.
   instead of allocated blocks, `-o <unit>` to fix the size unit, `-r` to print
   biggest-first, and `-R` for a plain screen-reader-friendly table.
 
-## Install with ocx
-
-```sh
-ocx install ocx.sh/dust/dust
-```
-
-```sh
-# or pin a specific version
-ocx install ocx.sh/dust/dust:1.2.4
-```
-
 ## Links
 
 - [dust on GitHub](https://github.com/bootandy/dust)
