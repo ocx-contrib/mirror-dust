@@ -24,7 +24,7 @@ jobs:
         with:
           persist-credentials: false
           fetch-depth: 0 # `task secrets` (gitleaks git) scans the full history
-      - uses: ocx-sh/conventions/.github/actions/setup@a9c8d2833f001c3f51925d0b5fc98599d8fd2d7c # v0
+      - uses: ocx-sh/conventions/.github/actions/setup@d7a6d872cfbf5a8cb504c11eaef73bca28b3b903 # v0.2.6
         with:
           groups: default,lint
       - run: task ci:lint
