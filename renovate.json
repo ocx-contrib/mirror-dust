@@ -1,1 +1,5 @@
+<<<<<<< before updating
 {"$schema": "https://docs.renovatebot.com/renovate-schema.json", "extends": ["github>ocx-sh/conventions//renovate/mirror#a798b81ea0842c94e46b7c840c8b158c72aa7ef0", "local>ocx-contrib/mirror-dust//.github/renovate-local"], "description": "ocx-baseline: template-owned file — change ocx-sh/conventions, then run task copier:update"}
+=======
+{"$schema": "https://docs.renovatebot.com/renovate-schema.json", "extends": ["github>ocx-sh/conventions//renovate/mirror#a9c8d2833f001c3f51925d0b5fc98599d8fd2d7c", "local>ocx-contrib/mirror-dust//.github/renovate-local"], "description": "ocx-baseline: template-owned file — change ocx-sh/conventions, then run task copier:update"}
+>>>>>>> after updating
