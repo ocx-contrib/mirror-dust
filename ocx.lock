@@ -30,6 +30,7 @@ repository = "ocx.sh/ocx/mirror"
 "linux/arm64" = "sha256:b03778e4f09c722e1bbbba91712d917ce6d0c021d020baf25942be7e6329b3bc"
 "windows/amd64" = "sha256:ddfaba968804c2b778c53750ce958893ed02266b10d492cdf8851da8b949555b"
 "windows/arm64" = "sha256:d63b4947b8b463c830574f975623af48bd53c6535f5dc75b17f9e5265bb4428d"
+
 [[tool]]
 name = "task"
 group = "default"
