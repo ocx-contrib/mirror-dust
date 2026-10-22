@@ -61,11 +61,6 @@ concurrency:
 # (musl) + fedora (other glibc vintage). The ALPINE LEG IS THE PROOF — drop it
 # and the claim is merely asserted.
 #
-# Staged rollout (skill Phase 10): darwin and windows are pre-written and
-# commented out below and in `assets:`, uncommented one pass at a time once the
-# Linux legs are end-to-end green. Both a platform key AND its asset pattern are
-# commented together — a declared-but-unmatched platform still boots a real
-# macos-14/windows runner and reports SUCCESS having tested nothing.
 platforms:
   linux/amd64:
     runner: ubuntu-latest
@@ -84,10 +79,13 @@ platforms:
   # No `containers:` on darwin or windows — those runners have no Linux
   # container engine, and the key is rejected at spec load.
   #
-  # darwin/arm64 and windows/arm64 are ABSENT ON PURPOSE and are not staged
-  # below — upstream ships neither, ever. See the Scope block in
-  # dust/mirror.yml for the asset listing that proves it.
-  #
+  # darwin/arm64 and windows/arm64 arrive upstream at v1.2.5 — 1.2.2–1.2.4
+  # ship neither — so both are bounded by `min_version` rather than left to
+  # match zero assets on the older releases.
+  darwin/arm64:
+    # Native Apple Silicon build on the arm64 macos-14 runner — no prefix.
+    runner: macos-14
+    min_version: "1.2.5"
   darwin/amd64:
     # Intel slice tested on the arm64 macos-14 runner via Rosetta 2 —
     # GitHub's native macos-13 Intel pool is exhausted and deadlocks push.
@@ -96,6 +94,10 @@ platforms:
   windows/amd64:
     runner: windows-latest
     shell: pwsh
+  windows/arm64:
+    runner: windows-11-arm
+    shell: pwsh
+    min_version: "1.2.5"
 
 notify:
   discord:
