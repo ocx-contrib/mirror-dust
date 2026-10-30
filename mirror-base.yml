@@ -83,13 +83,13 @@ platforms:
   # ship neither — so both are bounded by `min_version` rather than left to
   # match zero assets on the older releases.
   darwin/arm64:
-    # Native Apple Silicon build on the arm64 macos-14 runner — no prefix.
-    runner: macos-14
+    # Native Apple Silicon build on the arm64 macos-15 runner — no prefix.
+    runner: macos-15
     min_version: "1.2.5"
   darwin/amd64:
-    # Intel slice tested on the arm64 macos-14 runner via Rosetta 2 —
+    # Intel slice tested on the arm64 macos-15 runner via Rosetta 2 —
     # GitHub's native macos-13 Intel pool is exhausted and deadlocks push.
-    runner: macos-14
+    runner: macos-15
     prefix: ["arch", "-x86_64"]
   windows/amd64:
     runner: windows-latest
